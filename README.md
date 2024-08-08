@@ -1,0 +1,2 @@
+# DecentraSure
+Decentralized Insurance Company
