@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+// After successful login
+// navigate('/dashboard');
+
 
 const Login = () => {
     const [email, setEmail] = useState('');
