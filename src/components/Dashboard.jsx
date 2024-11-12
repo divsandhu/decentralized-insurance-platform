@@ -23,13 +23,11 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Memoize loadDashboardData to prevent unnecessary recreations
   const loadDashboardData = useCallback(async () => {
     setIsRefreshing(true);
     setError(null);
-    
+
     try {
-      // Load policies
       const policyCount = await BlockchainService.contract.methods.policyCounter().call();
       const policyPromises = [];
       for (let i = 0; i < policyCount; i++) {
@@ -38,7 +36,6 @@ const Dashboard = () => {
       const loadedPolicies = await Promise.all(policyPromises);
       setPolicies(loadedPolicies);
 
-      // Load claims
       const claimCount = await BlockchainService.contract.methods.claimCounter().call();
       const claimPromises = [];
       for (let i = 0; i < claimCount; i++) {
@@ -60,8 +57,6 @@ const Dashboard = () => {
       setIsConnected(connected);
       if (connected) {
         await loadDashboardData();
-        
-        // Subscribe to contract events
         subscribeToContractEvents();
       }
     } catch (err) {
@@ -75,40 +70,28 @@ const Dashboard = () => {
   const subscribeToContractEvents = () => {
     if (!BlockchainService.contract) return;
 
-    // Subscribe to PolicyCreated events
     BlockchainService.contract.events.PolicyCreated({})
-      .on('data', async (event) => {
-        console.log('New policy created:', event);
-        await loadDashboardData();
-      })
+      .on('data', async () => await loadDashboardData())
       .on('error', console.error);
 
-    // Subscribe to ClaimSubmitted events
     BlockchainService.contract.events.ClaimSubmitted({})
-      .on('data', async (event) => {
-        console.log('New claim submitted:', event);
-        await loadDashboardData();
-      })
+      .on('data', async () => await loadDashboardData())
       .on('error', console.error);
 
-    // Subscribe to ClaimProcessed events
     BlockchainService.contract.events.ClaimProcessed({})
-      .on('data', async (event) => {
-        console.log('Claim processed:', event);
-        await loadDashboardData();
-      })
+      .on('data', async () => await loadDashboardData())
       .on('error', console.error);
   };
 
   useEffect(() => {
     initializeBlockchain();
-  
+
     if (location.state?.refreshData) {
       loadDashboardData().then(() => {
         navigate(location.pathname, { replace: true, state: {} });
       });
     }
-  
+
     return () => {
       if (BlockchainService.contract) {
         BlockchainService.contract.events.PolicyCreated({}).unsubscribe();
@@ -117,18 +100,13 @@ const Dashboard = () => {
       }
     };
   }, [initializeBlockchain, loadDashboardData, location, navigate]);
-  
 
-  const handleManualRefresh = async () => {
-    await loadDashboardData();
-  };
+  const handleManualRefresh = async () => await loadDashboardData();
 
   const handleLogout = () => {
-    // Clear any stored state or session data
     setIsConnected(false);
     setPolicies([]);
     setClaims([]);
-    // Navigate to home
     navigate('/');
   };
 
@@ -252,53 +230,62 @@ const Dashboard = () => {
             </div>
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-gray-500 text-sm font-medium">Active Claims</h3>
-              <p className="text-3xl font-bold">
-                {claims.filter(claim => !claim.processed).length}
-              </p>
+              <p className="text-3xl font-bold">{claims.length}</p>
             </div>
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-gray-500 text-sm font-medium">Total Value Locked</h3>
-              <p className="text-3xl font-bold">
-                {policies.reduce((sum, policy) => sum + Number(policy.premium), 0).toFixed(4)} ETH
-              </p>
+              <h3 className="text-gray-500 text-sm font-medium">Policyholders</h3>
+              <p className="text-3xl font-bold">{/* Replace with dynamic count */}</p>
             </div>
           </div>
 
-          {/* Recent Activity */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
-              {claims.length === 0 ? (
-                <div className="text-gray-500 text-center py-4">No claims yet</div>
-              ) : (
-                <div className="space-y-4">
-                  {claims.slice(0, 5).map((claim, index) => (
-                    <div key={index} className="flex justify-between items-center border-b pb-2">
-                      <div>
-                        <p className="font-medium">Claim #{claim.id}</p>
-                        <p className="text-sm text-gray-500">
-                          Policy #{claim.policyId} - {claim.processed ? 'Processed' : 'Pending'}
-                        </p>
-                      </div>
-                      <span className={`px-2 py-1 rounded text-sm ${
-                        claim.processed 
-                          ? claim.approved 
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {claim.processed 
-                          ? claim.approved 
-                            ? 'Approved'
-                            : 'Rejected'
-                          : 'Pending'
-                        }
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          {/* Policies Table */}
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <h2 className="text-lg font-semibold text-gray-800 p-6 border-b">Policies</h2>
+            <table className="min-w-full bg-white">
+              <thead>
+                <tr>
+                  <th className="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Policy ID</th>
+                  <th className="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Policy Type</th>
+                  <th className="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Premium</th>
+                  <th className="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {policies.map((policy, index) => (
+                  <tr key={index} className="bg-white">
+                    <td className="py-4 px-6 text-sm text-gray-900">{policy.policyId}</td>
+                    <td className="py-4 px-6 text-sm text-gray-900">{policy.policyType}</td>
+                    <td className="py-4 px-6 text-sm text-gray-900">{policy.premiumAmount} ETH</td>
+                    <td className="py-4 px-6 text-sm text-gray-900">{policy.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Claims Table */}
+          <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
+            <h2 className="text-lg font-semibold text-gray-800 p-6 border-b">Claims</h2>
+            <table className="min-w-full bg-white">
+              <thead>
+                <tr>
+                  <th className="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Claim ID</th>
+                  <th className="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Policy ID</th>
+                  <th className="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {claims.map((claim, index) => (
+                  <tr key={index} className="bg-white">
+                    <td className="py-4 px-6 text-sm text-gray-900">{claim.claimId}</td>
+                    <td className="py-4 px-6 text-sm text-gray-900">{claim.policyId}</td>
+                    <td className="py-4 px-6 text-sm text-gray-900">{claim.amount} ETH</td>
+                    <td className="py-4 px-6 text-sm text-gray-900">{claim.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </main>

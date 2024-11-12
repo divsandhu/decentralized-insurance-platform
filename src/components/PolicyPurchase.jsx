@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Check } from 'lucide-react';
 import BlockchainService from '../services/BlockchainServices';
 
-const PolicyPurchase = () => {
+const PolicyPurchase = () => {  // Removed the onPolicyPurchase prop
   const [formData, setFormData] = useState({
     premium: '0.00001',
     duration: '1',
@@ -38,10 +37,10 @@ const PolicyPurchase = () => {
       setError('Blockchain service not initialized');
       return;
     }
-  
+
     setIsProcessing(true);
     setError('');
-  
+
     try {
       const result = await BlockchainService.createPolicy(
         formData.premium,
@@ -49,15 +48,16 @@ const PolicyPurchase = () => {
         parseInt(formData.duration),
         formData.policyType
       );
-  
-      // Wait until transaction is mined
+
       await BlockchainService.web3.eth.getTransactionReceipt(result.transactionHash);
-      
       setTransactionHash(result.transactionHash);
-  
-      // Trigger a dashboard refresh and reset state after navigation
-      navigate('/dashboard', {
-        state: { refreshData: true, transactionHash: result.transactionHash },
+
+      // Navigate to Dashboard with refresh flag
+      navigate('/dashboard', { 
+        state: { 
+          refreshData: true, 
+          transactionHash: result.transactionHash 
+        } 
       });
     } catch (err) {
       setError(err.message || 'Failed to purchase policy');
@@ -65,7 +65,6 @@ const PolicyPurchase = () => {
       setIsProcessing(false);
     }
   };
-  
 
   return (
     <div className="max-w-2xl mx-auto p-6">
@@ -75,9 +74,7 @@ const PolicyPurchase = () => {
         <div className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Premium (ETH)
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Premium (ETH)</label>
               <input
                 type="number"
                 name="premium"
@@ -90,9 +87,7 @@ const PolicyPurchase = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Duration (Days)
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Duration (Days)</label>
               <input
                 type="number"
                 name="duration"
@@ -105,9 +100,7 @@ const PolicyPurchase = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Coverage Amount (ETH)
-            </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Coverage Amount (ETH)</label>
             <input
               type="number"
               name="coverage"
@@ -119,9 +112,7 @@ const PolicyPurchase = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Policy Type
-            </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Policy Type</label>
             <select
               name="policyType"
               value={formData.policyType}
@@ -136,14 +127,12 @@ const PolicyPurchase = () => {
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-2 text-red-600" />
               <p>{error}</p>
             </div>
           )}
 
           {transactionHash && (
             <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg p-4 flex items-center">
-              <Check className="h-4 w-4 mr-2 text-green-600" />
               <p>Policy created! Transaction Hash: {transactionHash.slice(0, 10)}...</p>
             </div>
           )}

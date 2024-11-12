@@ -1,27 +1,58 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+// src/components/ClaimsManagement.jsx
+
+import React, { useState, useEffect } from 'react';
+import BlockchainService from '../services/BlockchainServices';
 
 const ClaimsManagement = () => {
+  const [claims, setClaims] = useState([]);
+  const [newClaim, setNewClaim] = useState({ policyId: '', amount: '', description: '' });
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchClaims = async () => {
+      const data = await BlockchainService.getClaims();
+      setClaims(data);
+    };
+    fetchClaims();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await BlockchainService.fileClaim(newClaim);
+      setClaims([...claims, newClaim]);
+    } catch (err) {
+      setError('Failed to file claim: ' + err.message);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center">
-      <h2 className="text-3xl font-bold mt-8">Claims Management</h2>
-      <div className="w-full max-w-4xl mt-8">
-        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-          <h3 className="text-2xl font-semibold mb-4">Your Claims</h3>
-          {/* Replace this section with dynamic claim data */}
-          <ul>
-            <li>Claim #12345 - Pending</li>
-            <li>Claim #67890 - Approved</li>
-          </ul>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <Link to="/submit-claim">
-            <button className="bg-red-600 text-white py-2 px-4 rounded-full shadow-md hover:bg-red-700 transition-colors">
-              Submit a New Claim
-            </button>
-          </Link>
-        </div>
-      </div>
+    <div className="claims-management">
+      <h2>File a Claim</h2>
+      <form onSubmit={handleSubmit}>
+        <label>Policy ID</label>
+        <input
+          type="text"
+          value={newClaim.policyId}
+          onChange={(e) => setNewClaim({ ...newClaim, policyId: e.target.value })}
+        />
+
+        <label>Amount</label>
+        <input
+          type="text"
+          value={newClaim.amount}
+          onChange={(e) => setNewClaim({ ...newClaim, amount: e.target.value })}
+        />
+
+        <label>Description</label>
+        <textarea
+          value={newClaim.description}
+          onChange={(e) => setNewClaim({ ...newClaim, description: e.target.value })}
+        />
+
+        <button type="submit">Submit Claim</button>
+        {error && <p className="error">{error}</p>}
+      </form>
     </div>
   );
 };

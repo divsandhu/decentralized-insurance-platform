@@ -1,27 +1,32 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+// src/components/PolicyManagement.jsx
+
+import React, { useEffect, useState } from 'react';
+import BlockchainService from '../services/BlockchainServices';
 
 const PolicyManagement = () => {
+  const [policies, setPolicies] = useState([]);
+
+  useEffect(() => {
+    const fetchPolicies = async () => {
+      const data = await BlockchainService.getPolicies();
+      setPolicies(data);
+    };
+    fetchPolicies();
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center">
-      <h2 className="text-3xl font-bold mt-8">Policy Management</h2>
-      <div className="w-full max-w-4xl mt-8">
-        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-          <h3 className="text-2xl font-semibold mb-4">Your Policies</h3>
-          {/* Replace this section with dynamic policy data */}
-          <ul>
-            <li>Policy #12345 - Active</li>
-            <li>Policy #67890 - Expired</li>
-          </ul>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <Link to="/policy-purchase">
-            <button className="bg-blue-600 text-white py-2 px-4 rounded-full shadow-md hover:bg-blue-700 transition-colors">
-              Purchase New Policy
-            </button>
-          </Link>
-        </div>
-      </div>
+    <div className="policy-management">
+      <h2>Policy Management</h2>
+      <table>
+        <thead><tr><th>Policy ID</th><th>Type</th><th>Status</th></tr></thead>
+        <tbody>
+          {policies.map(policy => (
+            <tr key={policy.id}>
+              <td>{policy.id}</td><td>{policy.type}</td><td>{policy.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
