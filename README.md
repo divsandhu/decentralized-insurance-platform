@@ -1,6 +1,6 @@
 # Decentralized Insurance Platform
 
-This project is a **Decentralized Insurance Platform** that allows users to create and manage insurance policies, file claims, and process claims on the blockchain. The platform leverages **Solidity** for smart contract development, **Hardhat** for testing and deployment, and **React** for the front-end interface, enabling users to interact with the insurance system securely and transparently.
+This **Decentralized Insurance Platform** allows users to create and manage insurance policies, file claims, and process claims on the blockchain. The platform leverages **Solidity** for smart contract development, **Hardhat** for testing and deployment, and **React** for the front-end interface, enabling users to interact with the insurance system securely and transparently.
 
 ## Features
 
